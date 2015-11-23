@@ -134,7 +134,7 @@ public class AgglomerativePhraseConstructor {
         }
 
         // construct a doubly-linked list of AdjacentPhrasesNode and put every node into priority queue
-        PriorityQueue<AdjacentPhrasesNode> nodeQueue = new PriorityQueue<>(words.length-1, (n1, n2)->n2.compareTo(n1)); // TODO: correct ordering?
+        PriorityQueue<AdjacentPhrasesNode> nodeQueue = new PriorityQueue<>(words.length-1, (n1, n2)->n2.compareTo(n1));
         AdjacentPhrasesNode head = null, tail = null;
 
         for(int i=0; i<words.length-1; i++) {
@@ -151,7 +151,7 @@ public class AgglomerativePhraseConstructor {
         }
 
         // agglomerative merging
-        while(nodeQueue.size() > 1) { // TODO: this loop always leaves the last pair without merging
+        while(nodeQueue.size() > 1) { // this loop always leaves the last pair without merging
             AdjacentPhrasesNode mergeCandidate = nodeQueue.poll();
             if(mergeCandidate.significanceScore >= SIGNIFICANCE_SCORE_THRESHOLD) {
                 if(mergeCandidate.leftNode != null) {

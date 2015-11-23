@@ -23,7 +23,7 @@ public class PhraseDictionary { // contains phrases only
             while((line = br.readLine()) != null) {
                 String phrase = line.split(",")[0].trim().toLowerCase(); // use lower case only
                 long count = Long.parseLong(line.split(",")[1].trim());
-                phraseToIdxAndCount.put(phrase, Pair.of(idx++, count)); // TODO: Assumption: dict file contains no phrase
+                phraseToIdxAndCount.put(phrase, Pair.of(idx++, count));
             }
         }
     }
