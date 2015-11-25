@@ -1,9 +1,10 @@
+import java.io.Serializable;
 import java.util.*;
 
 /**
  * Created by Jin on 11/18/2015.
  */
-public class AgglomerativePhraseConstructor {
+public class AgglomerativePhraseConstructor implements Serializable {
     private static final double SIGNIFICANCE_SCORE_THRESHOLD = 5.0;
     private final PhraseDictionary phraseDictionary;
     private long totalNumWords;

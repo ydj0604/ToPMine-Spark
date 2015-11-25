@@ -3,6 +3,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,19 +11,17 @@ import java.util.Map;
 /**
  * Created by Jin on 11/18/2015.
  */
-public class SparkJob implements  AutoCloseable {
+public class SparkJob implements Serializable {
 
     private final PhraseDictionary phraseDictionary; // dictionary used to get sparse vectors
     private final AgglomerativePhraseConstructor aggPhraseConstructor;
-    private final JavaSparkContext javaSparkContext;
     private final String corpusFilePath;
     public final String outputDirPath;
 
     public SparkJob(PhraseDictionary phraseDictionary, AgglomerativePhraseConstructor agglomerativePhraseConstructor,
-                    SparkConf conf, String corpusFilePath, String outputDirPath) {
+                    String corpusFilePath, String outputDirPath) {
         this.phraseDictionary = phraseDictionary;
         this.aggPhraseConstructor = agglomerativePhraseConstructor;
-        this.javaSparkContext = new JavaSparkContext(conf);
         this.corpusFilePath = corpusFilePath;
         this.outputDirPath = outputDirPath;
     }
@@ -51,22 +50,22 @@ public class SparkJob implements  AutoCloseable {
         return builder.toString();
     }
 
-    public void run() throws PhraseConstructionException {
+    public void run(SparkConf conf) throws PhraseConstructionException {
+        JavaSparkContext javaSparkContext = new JavaSparkContext(conf);
         JavaRDD<String> corpus = javaSparkContext.textFile(corpusFilePath); // TODO: assumption: each line is an one-sentence document without a period
         JavaRDD<String> bagOfPhrasesSparseVecs = corpus.map(line -> convertPhraseListOfDocumentToSparseVec(aggPhraseConstructor.splitSentenceIntoPhrases(line)));
+        //JavaRDD<List<String>> bagOfPhrasesSparseVecs = corpus.map(line -> aggPhraseConstructor.splitSentenceIntoPhrases(line));
 
         // output to a file since modeling lda is done in python
         // toString() is called on each RDD to write: the number of output files = the number of RDDs
         bagOfPhrasesSparseVecs.saveAsTextFile(outputDirPath);
 
         // print to stdout
-        // TODO: if data is big, it will crash
+        // TODO: testing - if data is big, it will crash
         System.out.println(bagOfPhrasesSparseVecs.collect());
-    }
 
-    @Override
-    public void close() {
-        javaSparkContext.stop();
+        // TODO: testing - output phrase dictionary to stdout
+        System.out.println(phraseDictionary);
         javaSparkContext.close();
     }
 }

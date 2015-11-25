@@ -6,7 +6,7 @@ import org.apache.commons.lang3.tuple.Pair;
 /**
  * Created by Jin on 11/18/2015.
  */
-public class PhraseDictionary { // contains phrases only
+public class PhraseDictionary implements Serializable { // contains phrases only
     private final Map<String, Pair<Integer, Long>> phraseToIdxAndCount;
 
     public PhraseDictionary(String dictFilePath) throws IOException {
