@@ -3,6 +3,7 @@ import org.junit.BeforeClass;
 import org.junit.Assert;
 import org.mockito.Mockito;
 
+import java.net.MalformedURLException;
 import java.util.List;
 
 /**
@@ -16,7 +17,7 @@ public class AgglomerativePhraseConstructorTest {
     }
 
     @Test
-    public void splitSentenceIntoPhrasesTestNormalCase() throws PhraseConstructionException {
+    public void splitSentenceIntoPhrasesTestNormalCase() throws PhraseConstructionException, MalformedURLException {
 
         // construct a mock dictionary
         PhraseDictionary dictMock = Mockito.mock(PhraseDictionary.class);
@@ -41,11 +42,14 @@ public class AgglomerativePhraseConstructorTest {
         Mockito.when(dictMock.getCountOfPhrase("for support")).thenReturn(33L);
         Mockito.when(dictMock.getCountOfPhrase("for")).thenReturn(350L);
 
+        Mockito.when(dictMock.getSize()).thenReturn(1000000L);
+
         // calculate actual result
-        AgglomerativePhraseConstructor phraseConstructor = new AgglomerativePhraseConstructor(dictMock, 2000);
+        AgglomerativePhraseConstructor phraseConstructor = new AgglomerativePhraseConstructor(dictMock);
         List<String> actualResult = phraseConstructor.splitSentenceIntoPhrases("markov blanket feature selection for support vector machines");
 
         // test validity
+        System.out.println(actualResult);
         Assert.assertArrayEquals(new String[]{"markov blanket", "feature selection", "for", "support vector machines"}, actualResult.toArray());
         Assert.assertTrue(phraseConstructor.calculateSignificanceScore("zero", "score") == 0.0);
         Assert.assertTrue(phraseConstructor.calculateSignificanceScore("blanket", "feature") <= 0.0);

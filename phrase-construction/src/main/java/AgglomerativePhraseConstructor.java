@@ -1,13 +1,15 @@
+import java.io.File;
 import java.io.Serializable;
+import java.net.MalformedURLException;
 import java.util.*;
 
 /**
  * Created by Jin on 11/18/2015.
  */
 public class AgglomerativePhraseConstructor implements Serializable {
-    private static final double SIGNIFICANCE_SCORE_THRESHOLD = 5.0;
+    private static final double SIGNIFICANCE_SCORE_THRESHOLD = 2.0;
     private final PhraseDictionary phraseDictionary;
-    private long totalNumWords;
+    private long totalNumWordsAndPhrases;
 
     private class AdjacentPhrasesNode { // linked list node
         private  String leftPhrase;
@@ -74,12 +76,12 @@ public class AgglomerativePhraseConstructor implements Serializable {
         }
     }
 
-    public AgglomerativePhraseConstructor(PhraseDictionary phraseDictionary, long totalNumWords) throws PhraseConstructionException {
+    public AgglomerativePhraseConstructor(PhraseDictionary phraseDictionary) throws PhraseConstructionException, MalformedURLException {
         if(phraseDictionary == null) {
             throw new PhraseConstructionException("AgglomerativePhraseConstructor: invalid argument(s) in AgglomerativePhraseConstructor");
         }
         this.phraseDictionary = phraseDictionary;
-        this.totalNumWords = totalNumWords;
+        this.totalNumWordsAndPhrases = phraseDictionary.getSize();
     }
 
     public double calculateSignificanceScore(String phrase1, String phrase2) throws PhraseConstructionException {
@@ -87,14 +89,15 @@ public class AgglomerativePhraseConstructor implements Serializable {
             throw new PhraseConstructionException("AgglomerativePhraseConstructor: invalid argument(s) in calculateSignificanceScore");
         }
 
+        // TODO: Hmmmm..!!
+
         double actualFreqOfCombined = (double) phraseDictionary.getCountOfPhrase(phrase1 + " " + phrase2);
-        double expectedFreqOfCombined = ((double)phraseDictionary.getCountOfPhrase(phrase1)/(double)totalNumWords)
-                * ((double)phraseDictionary.getCountOfPhrase(phrase2)/(double)totalNumWords)
-                * totalNumWords;
+        double expectedFreqOfCombined = ((double)phraseDictionary.getCountOfPhrase(phrase1)/(double) totalNumWordsAndPhrases)
+                * ((double)phraseDictionary.getCountOfPhrase(phrase2)/(double) totalNumWordsAndPhrases)
+                * totalNumWordsAndPhrases;
 
         double numerator = actualFreqOfCombined - expectedFreqOfCombined,
                 denominator = Math.max(actualFreqOfCombined, expectedFreqOfCombined)==0.0? 1.0 : Math.sqrt(Math.max(actualFreqOfCombined, expectedFreqOfCombined));
-
 
         return numerator / denominator;
     }
@@ -109,24 +112,36 @@ public class AgglomerativePhraseConstructor implements Serializable {
             throw new PhraseConstructionException("AgglomerativePhraseConstructor: invalid argument in splitSentenceIntoPhrases");
         }
 
+        if(sentence.charAt(sentence.length()-1) == '.') { // remove periods
+            sentence = sentence.substring(0, sentence.length()-1);
+        }
+
         // use lower case only
         String[] rawWords = sentence.toLowerCase().split(" "); // TODO: Assumption: words are separated only by a single white space
 
-        // filter the array
+        // filter the array of words
         List<String> wordList = new ArrayList<>();
         for(String word : rawWords) {
             if(word == null) {
                 continue;
             }
             word = word.trim();
+
+            if(word.length() > 0 && word.charAt(word.length()-1) < 'a' && word.charAt(word.length()-1) > 'z') {
+                word = word.substring(0, word.length()-1); // remove the last special char
+            }
+
             if(word.length()>0) {
+                // TODO: get the root word and insert
                 wordList.add(word);
             }
         }
         String[] words = wordList.stream().toArray(String[]::new); // convert it back to an array
 
+        // start a splitting process
         List<String> resultPhrases = new ArrayList<>();
 
+        // return immediately if there is no need for split
         if(words.length == 0) {
             return resultPhrases;
         } else if(words.length == 1) {

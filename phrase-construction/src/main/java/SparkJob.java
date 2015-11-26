@@ -16,7 +16,7 @@ public class SparkJob implements Serializable {
     private final PhraseDictionary phraseDictionary; // dictionary used to get sparse vectors
     private final AgglomerativePhraseConstructor aggPhraseConstructor;
     private final String corpusFilePath;
-    public final String outputDirPath;
+    private final String outputDirPath;
 
     public SparkJob(PhraseDictionary phraseDictionary, AgglomerativePhraseConstructor agglomerativePhraseConstructor,
                     String corpusFilePath, String outputDirPath) {
@@ -48,13 +48,16 @@ public class SparkJob implements Serializable {
         }
         builder.deleteCharAt(builder.length()-1); // remove the last comma
         return builder.toString();
+        // ex) PHRASE_INDEX:COUNT,PHRASE_INDEX:COUNT,... (for doc1)
+        //     PHRASE_INDEX:COUNT,PHRASE_INDEX:COUNT,... (for doc2)
     }
 
     public void run(SparkConf conf) throws PhraseConstructionException {
         JavaSparkContext javaSparkContext = new JavaSparkContext(conf);
         JavaRDD<String> corpus = javaSparkContext.textFile(corpusFilePath); // TODO: assumption: each line is an one-sentence document without a period
-        JavaRDD<String> bagOfPhrasesSparseVecs = corpus.map(line -> convertPhraseListOfDocumentToSparseVec(aggPhraseConstructor.splitSentenceIntoPhrases(line)));
-        //JavaRDD<List<String>> bagOfPhrasesSparseVecs = corpus.map(line -> aggPhraseConstructor.splitSentenceIntoPhrases(line));
+
+        //JavaRDD<String> bagOfPhrasesSparseVecs = corpus.map(line -> convertPhraseListOfDocumentToSparseVec(aggPhraseConstructor.splitSentenceIntoPhrases(line)));
+        JavaRDD<List<String>> bagOfPhrasesSparseVecs = corpus.map(line -> aggPhraseConstructor.splitSentenceIntoPhrases(line));
 
         // output to a file since modeling lda is done in python
         // toString() is called on each RDD to write: the number of output files = the number of RDDs
@@ -62,7 +65,7 @@ public class SparkJob implements Serializable {
 
         // print to stdout
         // TODO: testing - if data is big, it will crash
-        System.out.println(bagOfPhrasesSparseVecs.collect());
+        //System.out.println(bagOfPhrasesSparseVecs.collect());
 
         // TODO: testing - output phrase dictionary to stdout
         System.out.println(phraseDictionary);
