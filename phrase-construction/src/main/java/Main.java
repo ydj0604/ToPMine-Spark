@@ -7,21 +7,20 @@ import java.io.IOException;
  * Created by Jin on 11/18/2015.
  */
 public class Main {
-    public static final String outputDirPath = "/home/dongjinyu/workspace/ToPMine/phrase-construction/src/resources/dblp_output/";
-    public static final String corpusFilePath = "/home/dongjinyu/workspace/ToPMine/phrase-construction/src/resources/dblp_titles.txt";
-    public static final String dictFilePath = "/home/dongjinyu/workspace/ToPMine/phrase-construction/src/resources/phrases_count.txt";
-    public static final String wordNetDirPath = "/home/dongjinyu/workspace/ToPMine/phrase-construction/src/resources/wordnet";
+    public static final String OUTPUT_DIR_PATH = "/home/dongjinyu/workspace/ToPMine/phrase-construction/src/resources/dblp_output/";
+    public static final String CORPUS_FILE_PATH = "/home/dongjinyu/workspace/ToPMine/phrase-construction/src/resources/dblp_titles.txt";
+    public static final String DICT_FILE_PATH = "/home/dongjinyu/workspace/ToPMine/phrase-construction/src/resources/phrases_count.txt";
 
     public static void main(String[] args) throws IOException, PhraseConstructionException {
         System.out.println("Hello Spark");
 
-        // prepare dependencies
+        // prepare conf
         SparkConf conf = new SparkConf().setAppName("Phrase Construction");
-        PhraseDictionary phraseDictionary = new PhraseDictionary(dictFilePath);
-        AgglomerativePhraseConstructor agglomerativePhraseConstructor = new AgglomerativePhraseConstructor(phraseDictionary);
 
-        // run spark job through dependency injection
-        SparkJob sparkJob = new SparkJob(phraseDictionary, agglomerativePhraseConstructor, corpusFilePath, outputDirPath);
-        sparkJob.run(conf);
+        try(JavaSparkContext javaSparkContext = new JavaSparkContext(conf)) {
+            PhraseDictionary phraseDictionary = SparkJob.constructPhraseDictionary(javaSparkContext, new PhraseMiner(), CORPUS_FILE_PATH);
+            System.out.println(phraseDictionary); // TODO: testing
+            //SparkJob.agglomerativeMerge(javaSparkContext, new AgglomerativePhraseConstructor(phraseDictionary), phraseDictionary, CORPUS_FILE_PATH, OUTPUT_DIR_PATH);
+        }
     }
 }

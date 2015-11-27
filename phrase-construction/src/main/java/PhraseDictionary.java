@@ -1,6 +1,8 @@
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.commons.lang.mutable.MutableLong;
 import org.apache.commons.lang3.tuple.Pair;
 
 /**
@@ -27,6 +29,14 @@ public class PhraseDictionary implements Serializable {
                 long count = Long.parseLong(line.split(",")[1].trim());
                 phraseToIdxAndCount.put(phrase, Pair.of(idx++, count));
             }
+        }
+    }
+
+    public PhraseDictionary(Map<String, MutableLong> phraseToCount) {
+        phraseToIdxAndCount = new HashMap<>();
+        int idx = 0;
+        for(Map.Entry<String, MutableLong> entry : phraseToCount.entrySet()) {
+            phraseToIdxAndCount.put(entry.getKey(), Pair.of(idx++, entry.getValue().longValue()));
         }
     }
 

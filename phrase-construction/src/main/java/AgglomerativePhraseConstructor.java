@@ -7,7 +7,7 @@ import java.util.*;
  * Created by Jin on 11/18/2015.
  */
 public class AgglomerativePhraseConstructor implements Serializable {
-    private static final double SIGNIFICANCE_SCORE_THRESHOLD = 2.0;
+    private static final double SIGNIFICANCE_SCORE_THRESHOLD = 5.0;
     private final PhraseDictionary phraseDictionary;
     private long totalNumWordsAndPhrases;
 
@@ -20,7 +20,7 @@ public class AgglomerativePhraseConstructor implements Serializable {
         public AdjacentPhrasesNode rightNode;
 
         public AdjacentPhrasesNode(String leftPhrase, String rightPhrase) throws PhraseConstructionException {
-            if(!isValidPhrase(leftPhrase) || !isValidPhrase(rightPhrase)) {
+            if(!Utility.isValidPhrase(leftPhrase) || !Utility.isValidPhrase(rightPhrase)) {
                 throw new PhraseConstructionException("AgglomerativePhraseConstructor: invalid argument(s) in AdjacentPhrasesNode");
             }
 
@@ -32,7 +32,7 @@ public class AgglomerativePhraseConstructor implements Serializable {
         }
 
         public void updateLeftPhrase(String newPhrase) throws PhraseConstructionException {
-            if(!isValidPhrase(newPhrase)) {
+            if(!Utility.isValidPhrase(newPhrase)) {
                 throw new PhraseConstructionException("AgglomerativePhraseConstructor: invalid argument in updateLeftPhrase");
             }
             this.leftPhrase = newPhrase;
@@ -40,7 +40,7 @@ public class AgglomerativePhraseConstructor implements Serializable {
         }
 
         public void updateRightPhrase(String newPhrase) throws PhraseConstructionException {
-            if(!isValidPhrase(newPhrase)) {
+            if(!Utility.isValidPhrase(newPhrase)) {
                 throw new PhraseConstructionException("AgglomerativePhraseConstructor: invalid argument in updateRightPhrase");
             }
             this.rightPhrase = newPhrase;
@@ -85,7 +85,7 @@ public class AgglomerativePhraseConstructor implements Serializable {
     }
 
     public double calculateSignificanceScore(String phrase1, String phrase2) throws PhraseConstructionException {
-        if(!isValidPhrase(phrase1) || !isValidPhrase(phrase2)) {
+        if(!Utility.isValidPhrase(phrase1) || !Utility.isValidPhrase(phrase2)) {
             throw new PhraseConstructionException("AgglomerativePhraseConstructor: invalid argument(s) in calculateSignificanceScore");
         }
 
@@ -102,41 +102,8 @@ public class AgglomerativePhraseConstructor implements Serializable {
         return numerator / denominator;
     }
 
-    public boolean isValidPhrase(String phrase) {
-        // TODO: check special chars
-        return phrase!=null && phrase.length()!=0 && phrase.charAt(0)!=' ' && phrase.charAt(phrase.length()-1)!=' ';
-    }
-
     public List<String> splitSentenceIntoPhrases(String sentence) throws PhraseConstructionException {
-        if(sentence == null) {
-            throw new PhraseConstructionException("AgglomerativePhraseConstructor: invalid argument in splitSentenceIntoPhrases");
-        }
-
-        if(sentence.charAt(sentence.length()-1) == '.') { // remove periods
-            sentence = sentence.substring(0, sentence.length()-1);
-        }
-
-        // use lower case only
-        String[] rawWords = sentence.toLowerCase().split(" "); // TODO: Assumption: words are separated only by a single white space
-
-        // filter the array of words
-        List<String> wordList = new ArrayList<>();
-        for(String word : rawWords) {
-            if(word == null) {
-                continue;
-            }
-            word = word.trim();
-
-            if(word.length() > 0 && word.charAt(word.length()-1) < 'a' && word.charAt(word.length()-1) > 'z') {
-                word = word.substring(0, word.length()-1); // remove the last special char
-            }
-
-            if(word.length()>0) {
-                // TODO: get the root word and insert
-                wordList.add(word);
-            }
-        }
-        String[] words = wordList.stream().toArray(String[]::new); // convert it back to an array
+        String[] words = Utility.tokenize(sentence);
 
         // start a splitting process
         List<String> resultPhrases = new ArrayList<>();
@@ -167,7 +134,7 @@ public class AgglomerativePhraseConstructor implements Serializable {
         }
 
         // agglomerative merging
-        while(nodeQueue.size() > 1) { // this loop always leaves the last pair without merging
+        while(nodeQueue.size() > 0) { // this loop always leaves the last pair without merging
             AdjacentPhrasesNode mergeCandidate = nodeQueue.poll();
             if(mergeCandidate.significanceScore >= SIGNIFICANCE_SCORE_THRESHOLD) {
                 if(mergeCandidate.leftNode != null) {
@@ -192,22 +159,22 @@ public class AgglomerativePhraseConstructor implements Serializable {
             }
         }
 
-        // TODO: need to decide whether to merge the last pair or not
-        // TODO: currently, it simply compares phrase counts
-        if(nodeQueue.size() == 1) {
-            AdjacentPhrasesNode lastNode = nodeQueue.poll();
-            long mergedPhraseCount = phraseDictionary.getCountOfPhrase(lastNode.toString()).longValue(),
-                    leftPhraseCount = phraseDictionary.getCountOfPhrase(lastNode.leftPhrase).longValue(),
-                    rightPhraseCount = phraseDictionary.getCountOfPhrase(lastNode.rightPhrase).longValue();
-            if(mergedPhraseCount >= Math.max(leftPhraseCount, rightPhraseCount)) {
-                resultPhrases.add(lastNode.toString());
-                return resultPhrases;
-            } else {
-                resultPhrases.add(lastNode.leftPhrase);
-                resultPhrases.add(lastNode.rightPhrase);
-                return resultPhrases;
-            }
-        }
+//        // TODO: need to decide whether to merge the last pair or not
+//        // TODO: currently, it simply compares phrase counts
+//        if(nodeQueue.size() == 1) {
+//            AdjacentPhrasesNode lastNode = nodeQueue.poll();
+//            long mergedPhraseCount = phraseDictionary.getCountOfPhrase(lastNode.toString()).longValue(),
+//                    leftPhraseCount = phraseDictionary.getCountOfPhrase(lastNode.leftPhrase).longValue(),
+//                    rightPhraseCount = phraseDictionary.getCountOfPhrase(lastNode.rightPhrase).longValue();
+//            if(mergedPhraseCount >= Math.max(leftPhraseCount, rightPhraseCount)) {
+//                resultPhrases.add(lastNode.toString());
+//                return resultPhrases;
+//            } else {
+//                resultPhrases.add(lastNode.leftPhrase);
+//                resultPhrases.add(lastNode.rightPhrase);
+//                return resultPhrases;
+//            }
+//        }
 
         // at this point, linked list contains merge result
         AdjacentPhrasesNode curr = head;

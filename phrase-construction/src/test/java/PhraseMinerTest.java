@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Created by Jin on 11/22/2015.
  */
-public class AgglomerativePhraseConstructorTest {
+public class PhraseMinerTest {
 
     @BeforeClass
     public static void setUp() {
