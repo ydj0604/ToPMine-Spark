@@ -1,5 +1,9 @@
 import org.apache.commons.lang.mutable.MutableInt;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -68,5 +72,14 @@ public final class Utility {
         return builder.toString();
         // ex) PHRASE_INDEX:COUNT,PHRASE_INDEX:COUNT,... (for doc1)
         //     PHRASE_INDEX:COUNT,PHRASE_INDEX:COUNT,... (for doc2)
+    }
+
+    public static void writeToFile(Object o, String filePath) throws IOException {
+        File outputFile = new File(filePath);
+        try(FileWriter fileWriter = new FileWriter(outputFile);
+            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
+
+            bufferedWriter.write(o.toString());
+        }
     }
 }

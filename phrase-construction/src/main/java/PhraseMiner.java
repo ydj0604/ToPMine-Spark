@@ -13,10 +13,11 @@ import java.util.Map;
 public class PhraseMiner implements Serializable {
     private static final int PHRASE_MIN_FREQ = 10;
 
-    public Map<Long, List<Integer>> findIndicesOfPhraseLengthN_ForSentenceIdS(String[] sentenceTokens, long S, int N,
+    public Map<Long, List<Integer>> findIndicesOfPhraseLengthN_ForSentenceIdS(String sentence, long S, int N,
                                                                Map<Long, List<Integer>> sentenceIdToIndicesOfPhraseLengthN_MinusOne,
                                                                Map<String, MutableLong> phraseToCount) throws PhraseConstructionException {
 
+        String[] sentenceTokens = Utility.tokenize(sentence);
         Map<Long, List<Integer>> sentenceIdToIndicesOfPhraseLengthN = new HashMap<>();
         sentenceIdToIndicesOfPhraseLengthN.put(S, new ArrayList<>());
 
@@ -56,8 +57,10 @@ public class PhraseMiner implements Serializable {
         return sentenceIdToIndicesOfPhraseLengthN;
     }
 
-    public Map<String, MutableLong> countPhraseOfLengthN_InSentenceIdS(String[] sentenceTokens, long S, int N, Map<Long, List<Integer>> sentenceIdToIndicesOfPhraseLengthN) {
+    public Map<String, MutableLong> countPhraseOfLengthN_InSentenceIdS(String sentence, long S, int N,
+                                    Map<Long, List<Integer>> sentenceIdToIndicesOfPhraseLengthN) throws PhraseConstructionException {
 
+        String[] sentenceTokens = Utility.tokenize(sentence);
         Map<String, MutableLong> phraseToMutableCount = new HashMap<>();
         List<Integer> indicesOfPhraseLengthN = sentenceIdToIndicesOfPhraseLengthN.get(S);
 
@@ -77,4 +80,6 @@ public class PhraseMiner implements Serializable {
 
         return phraseToMutableCount;
     }
+
+    // TODO: merge two methods
 }

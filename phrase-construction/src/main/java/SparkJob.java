@@ -1,11 +1,9 @@
-import org.apache.commons.lang.mutable.MutableInt;
 import org.apache.commons.lang.mutable.MutableLong;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import scala.Tuple2;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +32,15 @@ public final class SparkJob {
         return merged;
     }
 
+    private static boolean containsWhitespace(List<String> list) {
+        for(String elem : list) {
+            if(elem.contains(" ")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // PART I : Phrase Mining
     public static PhraseDictionary constructPhraseDictionary(JavaSparkContext javaSparkContext, PhraseMiner phraseMiner, String corpusFilePath)
             throws PhraseConstructionException {
@@ -42,7 +49,6 @@ public final class SparkJob {
         JavaRDD<String> corpus = javaSparkContext.textFile(corpusFilePath); // TODO: assumption: each line is an one-sentence document without a period
         JavaPairRDD<String, Long> sentenceIdx = corpus.zipWithIndex();
         JavaPairRDD<Long, String> idxSentence = sentenceIdx.mapToPair(tuple -> tuple.swap());
-        JavaPairRDD<Long, String[]> idxSentenceTokens = idxSentence.mapToPair(tuple -> new Tuple2<>(tuple._1, Utility.tokenize(tuple._2)));
 
         // PART I : phrase mining
         // variables to be used across all iterations
@@ -57,13 +63,13 @@ public final class SparkJob {
 
             // get indices of all length-N (=curr length) phrases
             JavaRDD<Map<Long, List<Integer>>> sentenceIdToIndicesOfPhraseCurrLength =
-                    idxSentenceTokens.map(tuple -> phraseMiner.findIndicesOfPhraseLengthN_ForSentenceIdS(tuple._2, tuple._1, N, sentenceIdToIndicesOfPhrasePrevLengthTemp, phraseToCountTemp));
+                    idxSentence.map(tuple -> phraseMiner.findIndicesOfPhraseLengthN_ForSentenceIdS(tuple._2(), tuple._1(), N, sentenceIdToIndicesOfPhrasePrevLengthTemp, phraseToCountTemp));
             // TODO: filter sentence with an empty list
             final Map<Long, List<Integer>> mergedSentenceIdToIndicesOfPhraseCurrLength = sentenceIdToIndicesOfPhraseCurrLength.reduce((map1, map2) -> mergeIdxMaps(map1, map2));
 
             // count phrases of length-N
             JavaRDD<Map<String, MutableLong>> phraseToCountCurr =
-                    idxSentenceTokens.map(tuple -> phraseMiner.countPhraseOfLengthN_InSentenceIdS(tuple._2, tuple._1, N, mergedSentenceIdToIndicesOfPhraseCurrLength));
+                    idxSentence.map(tuple -> phraseMiner.countPhraseOfLengthN_InSentenceIdS(tuple._2(), tuple._1(), N, mergedSentenceIdToIndicesOfPhraseCurrLength));
             Map<String, MutableLong> mergedPhraseToCountCurr = phraseToCountCurr.reduce((map1, map2) -> mergePhraseCountMaps(map1, map2));
             phraseToCount = mergePhraseCountMaps(phraseToCount, mergedPhraseToCountCurr);
 
@@ -75,18 +81,16 @@ public final class SparkJob {
     }
 
     // PART II : Agglomerative Merging
-    public static void agglomerativeMerge(JavaSparkContext javaSparkContext, AgglomerativePhraseConstructor aggPhraseConstructor, PhraseDictionary phraseDictionary,
+    public static void agglomerativeMerge(JavaSparkContext javaSparkContext, AgglomerativePhraseConstructor aggPhraseConstructor,
                            String corpusFilePath, String outputDirPath) throws PhraseConstructionException {
 
         JavaRDD<String> corpus = javaSparkContext.textFile(corpusFilePath); // TODO: assumption: each line is an one-sentence document without a period
         //JavaRDD<String> bagOfPhrasesSparseVecs = corpus.map(line -> convertPhraseListOfDocumentToSparseVec(aggPhraseConstructor.splitSentenceIntoPhrases(line)));
         JavaRDD<List<String>> bagOfPhrasesSparseVecs = corpus.map(line -> aggPhraseConstructor.splitSentenceIntoPhrases(line));
+        JavaRDD<List<String>> filteredSparseVecs = bagOfPhrasesSparseVecs.filter(list -> containsWhitespace(list));
 
         // output to a file since modeling lda is done in python
         // toString() is called on each RDD to write: the number of output files = the number of RDDs
-        bagOfPhrasesSparseVecs.saveAsTextFile(outputDirPath);
-
-        // TODO: testing - output phrase dictionary to stdout
-        System.out.println(phraseDictionary);
+        filteredSparseVecs.saveAsTextFile(outputDirPath);
     }
 }

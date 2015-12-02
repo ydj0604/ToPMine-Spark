@@ -134,9 +134,9 @@ public class AgglomerativePhraseConstructor implements Serializable {
         }
 
         // agglomerative merging
-        while(nodeQueue.size() > 0) { // this loop always leaves the last pair without merging
-            AdjacentPhrasesNode mergeCandidate = nodeQueue.poll();
-            if(mergeCandidate.significanceScore >= SIGNIFICANCE_SCORE_THRESHOLD) {
+        while(nodeQueue.size() > 1) { // this loop always leaves the last pair without attempting to merge
+            final AdjacentPhrasesNode mergeCandidate = nodeQueue.poll();
+            if(mergeCandidate.getSignificanceScore() >= SIGNIFICANCE_SCORE_THRESHOLD) {
                 if(mergeCandidate.leftNode != null) {
                     nodeQueue.remove(mergeCandidate.leftNode); // TODO: removing from built-in PQ is linear. Need improvement?
                     mergeCandidate.leftNode.updateRightPhrase(mergeCandidate.toString()); // update merged phrase
@@ -159,31 +159,27 @@ public class AgglomerativePhraseConstructor implements Serializable {
             }
         }
 
-//        // TODO: need to decide whether to merge the last pair or not
-//        // TODO: currently, it simply compares phrase counts
-//        if(nodeQueue.size() == 1) {
-//            AdjacentPhrasesNode lastNode = nodeQueue.poll();
-//            long mergedPhraseCount = phraseDictionary.getCountOfPhrase(lastNode.toString()).longValue(),
-//                    leftPhraseCount = phraseDictionary.getCountOfPhrase(lastNode.leftPhrase).longValue(),
-//                    rightPhraseCount = phraseDictionary.getCountOfPhrase(lastNode.rightPhrase).longValue();
-//            if(mergedPhraseCount >= Math.max(leftPhraseCount, rightPhraseCount)) {
-//                resultPhrases.add(lastNode.toString());
-//                return resultPhrases;
-//            } else {
-//                resultPhrases.add(lastNode.leftPhrase);
-//                resultPhrases.add(lastNode.rightPhrase);
-//                return resultPhrases;
-//            }
-//        }
+        // decide whether to merge the last pair or not
+        if(nodeQueue.size() == 1) {
+            AdjacentPhrasesNode lastNode = nodeQueue.poll();
+            if(lastNode.getSignificanceScore() >= SIGNIFICANCE_SCORE_THRESHOLD) {
+                resultPhrases.add(lastNode.toString());
+                return resultPhrases;
+            } else {
+                resultPhrases.add(lastNode.getLeftPhrase());
+                resultPhrases.add(lastNode.getRightPhrase());
+                return resultPhrases;
+            }
+        }
 
         // at this point, linked list contains merge result
         AdjacentPhrasesNode curr = head;
         while(curr != null) {
             if(curr.rightNode == null) { // last node in the linked list
-                resultPhrases.add(curr.leftPhrase);
-                resultPhrases.add(curr.rightPhrase);
+                resultPhrases.add(curr.getLeftPhrase());
+                resultPhrases.add(curr.getRightPhrase());
             } else {
-                resultPhrases.add(curr.leftPhrase);
+                resultPhrases.add(curr.getLeftPhrase());
             }
             curr = curr.rightNode;
         }
