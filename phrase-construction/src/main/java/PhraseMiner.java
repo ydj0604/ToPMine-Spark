@@ -2,39 +2,45 @@ import org.apache.commons.lang.mutable.MutableInt;
 import org.apache.commons.lang.mutable.MutableLong;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Jin on 11/25/2015.
  */
 public class PhraseMiner implements Serializable {
     private static final int PHRASE_MIN_FREQ = 10;
+    private final Set<String> stopWordsSet;
 
-    public Map<Long, List<Integer>> findIndicesOfPhraseLengthN_ForSentenceIdS(String sentence, long S, int N,
-                                                               Map<Long, List<Integer>> sentenceIdToIndicesOfPhraseLengthN_MinusOne,
-                                                               Map<String, MutableLong> phraseToCount) throws PhraseConstructionException {
+    public PhraseMiner(Set<String> stopWordsSet) {
+        this.stopWordsSet = stopWordsSet;
+    }
 
-        String[] sentenceTokens = Utility.tokenize(sentence);
-        Map<Long, List<Integer>> sentenceIdToIndicesOfPhraseLengthN = new HashMap<>();
-        sentenceIdToIndicesOfPhraseLengthN.put(S, new ArrayList<>());
+    public Map<Long, List<Integer>> findIndicesOfCandidatePhraseLengthN_ForSentenceIdxS(String sentence, long S, int N,
+                                                                                        Map<Long, List<Integer>> sentenceIdToIndicesOfPhraseLengthN_MinusOne,
+                                                                                        Map<String, MutableLong> phraseToCount) throws PhraseConstructionException {
 
-        // special case
+        Map<Long, List<Integer>> sentenceIdxToIndicesOfCandidatePhraseLengthN = new HashMap<>();
+        sentenceIdxToIndicesOfCandidatePhraseLengthN.put(S, new ArrayList<>());
+
+        String[] sentenceTokens = Utility.tokenize(sentence, stopWordsSet);
+        if(sentenceTokens.length == 0) {
+            return sentenceIdxToIndicesOfCandidatePhraseLengthN;
+        }
+
+        // special cases
         if(N < 1 || S < 0) {
-            throw new PhraseConstructionException("PhraseMiner: invalid input in findIndicesOfPhraseLengthN_ForSentenceIdS");
+            throw new PhraseConstructionException("PhraseMiner: invalid input in findIndicesOfCandidatePhraseLengthN_ForSentenceIdxS");
         } else if(N == 1) {
             for(int i=0; i<sentenceTokens.length; i++) {
-                sentenceIdToIndicesOfPhraseLengthN.get(S).add(i);
+                sentenceIdxToIndicesOfCandidatePhraseLengthN.get(S).add(i);
             }
-            return sentenceIdToIndicesOfPhraseLengthN;
+            return sentenceIdxToIndicesOfCandidatePhraseLengthN;
         }
 
         // at this point, N > 1, input maps should be non-null
         // for each starting idx of length N-1 phrase
         for(Integer idx : sentenceIdToIndicesOfPhraseLengthN_MinusOne.get(S)) {
-            if(idx + N-1 >= sentenceTokens.length) {
+            if(idx + N-1 > sentenceTokens.length) {
                 continue; // if phrase of length N starting at idx can't exist, ignore
             }
 
@@ -50,22 +56,26 @@ public class PhraseMiner implements Serializable {
 
             // check if the phrase satisfies required min freq
             if(phraseToCount.containsKey(phrase) && phraseToCount.get(phrase).longValue() >= PHRASE_MIN_FREQ) {
-                sentenceIdToIndicesOfPhraseLengthN.get(S).add(idx);
+                sentenceIdxToIndicesOfCandidatePhraseLengthN.get(S).add(idx);
             }
         }
 
-        return sentenceIdToIndicesOfPhraseLengthN;
+        return sentenceIdxToIndicesOfCandidatePhraseLengthN;
     }
 
-    public Map<String, MutableLong> countPhraseOfLengthN_InSentenceIdS(String sentence, long S, int N,
-                                    Map<Long, List<Integer>> sentenceIdToIndicesOfPhraseLengthN) throws PhraseConstructionException {
+    public Map<String, MutableLong> countPhraseOfLengthN_InSentenceIdxS(String sentence, long S, int N,
+                                                                        Map<Long, List<Integer>> sentenceIdxToIndicesOfPhraseLengthN) throws PhraseConstructionException {
 
-        String[] sentenceTokens = Utility.tokenize(sentence);
+        String[] sentenceTokens = Utility.tokenize(sentence, stopWordsSet);
+        if(sentenceTokens.length == 0) {
+            return new HashMap<>();
+        }
+
         Map<String, MutableLong> phraseToMutableCount = new HashMap<>();
-        List<Integer> indicesOfPhraseLengthN = sentenceIdToIndicesOfPhraseLengthN.get(S);
+        List<Integer> indicesOfPhraseLengthN = sentenceIdxToIndicesOfPhraseLengthN.get(S);
 
         for(Integer idx : indicesOfPhraseLengthN) {
-            if(indicesOfPhraseLengthN.contains(idx+1)) { // TODO: should use Set<Integer> to speed up look-up ?
+            if(N==1 || indicesOfPhraseLengthN.contains(idx+1)) { // TODO: should use Set<Integer> to speed up look-up ? / NEED N==1 for special case
                 StringBuilder phraseBuilder = new StringBuilder();
                 for(int i=idx; i<idx+N; i++) {
                     phraseBuilder.append(sentenceTokens[i]);
@@ -80,6 +90,4 @@ public class PhraseMiner implements Serializable {
 
         return phraseToMutableCount;
     }
-
-    // TODO: merge two methods
 }

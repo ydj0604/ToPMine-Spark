@@ -9,10 +9,11 @@ import java.time.ZoneOffset;
  * Created by Jin on 11/18/2015.
  */
 public class Main {
-    public static final String OUTPUT_FILE_PATH = "/home/dongjinyu/workspace/ToPMine/phrase-construction/src/resources/output.txt";
-    public static final String CORPUS_FILE_PATH = "/home/dongjinyu/workspace/ToPMine/phrase-construction/src/resources/dblp_titles.txt";
-    public static final String DICT_FILE_PATH = "/home/dongjinyu/workspace/ToPMine/phrase-construction/src/resources/dict.txt";
-    public static final String OUTPUT_DIR_PATH = "/home/dongjinyu/workspace/ToPMine/phrase-construction/src/resources/dblp_output/";
+    public static final String CORPUS_FILE_PATH = "data\\dblp_titles.txt";
+    public static final String OUTPUT_FILE_PATH = "output\\dblp_output.txt";
+    public static final String DICT_FILE_PATH = "output\\dblp_dict.txt";
+    public static final String STOP_WORDS_FILE_PATH = "data\\stopwords.txt";
+
 
     public static void main(String[] args) throws IOException, PhraseConstructionException {
         System.out.println("Hello Spark");
@@ -22,11 +23,10 @@ public class Main {
         SparkConf conf = new SparkConf().setAppName("Phrase Construction");
 
         try(JavaSparkContext javaSparkContext = new JavaSparkContext(conf)) {
-            PhraseDictionary phraseDictionary = SparkJob.constructPhraseDictionary(javaSparkContext, new PhraseMiner(), CORPUS_FILE_PATH);
-            Utility.writeToFile(phraseDictionary, DICT_FILE_PATH);
-            SparkJob.agglomerativeMerge(javaSparkContext, new AgglomerativePhraseConstructor(phraseDictionary), CORPUS_FILE_PATH, OUTPUT_DIR_PATH);
+            SparkJob.runPhraseMining(javaSparkContext, CORPUS_FILE_PATH, OUTPUT_FILE_PATH, DICT_FILE_PATH, STOP_WORDS_FILE_PATH);
         }
 
+        // measure time
         long elapsedTimeInSeconds = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) - startTime.toEpochSecond(ZoneOffset.UTC);
         System.out.println("Elpased Time: " + elapsedTimeInSeconds + " seconds");
     }

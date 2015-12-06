@@ -1,13 +1,7 @@
 import org.apache.commons.lang.mutable.MutableInt;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 
 /**
  * Created by Jin on 11/26/2015.
@@ -18,7 +12,7 @@ public final class Utility {
         return phrase!=null && phrase.length()!=0 && phrase.charAt(0)!=' ' && phrase.charAt(phrase.length()-1)!=' ';
     }
 
-    public static String[] tokenize(String line) throws PhraseConstructionException {
+    public static String[] tokenize(String line, Set<String> stopWordsSet) throws PhraseConstructionException {
         if (line == null || line.length() == 0) {
             throw new PhraseConstructionException("Utility: invalid argument in tokenize");
         }
@@ -37,8 +31,8 @@ public final class Utility {
                 continue;
             }
             word = word.trim();
-            word = word.replaceAll("[^\\w]", ""); // remove anything that is not a word char (a-z, 0-9, _)
-            if (word.length() > 0) {
+            word = word.replaceAll("\\.", ""); // remove period
+            if((stopWordsSet==null || !stopWordsSet.contains(word)) && word.length() > 0) {
                 // TODO: get the ROOT WORD and insert ?
                 wordList.add(word);
             }
@@ -80,6 +74,19 @@ public final class Utility {
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
 
             bufferedWriter.write(o.toString());
+        }
+    }
+
+    public static Set<String> buildStopWordsSet(String filePath) throws IOException {
+        try(FileInputStream fstream = new FileInputStream(filePath);
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fstream))) {
+
+            Set<String> stopWordsSet = new HashSet<>();
+            String line;
+            while((line = bufferedReader.readLine()) != null) {
+                stopWordsSet.add(line.toLowerCase().trim());
+            }
+            return stopWordsSet;
         }
     }
 }

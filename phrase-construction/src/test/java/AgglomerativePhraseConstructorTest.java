@@ -45,8 +45,8 @@ public class AgglomerativePhraseConstructorTest {
         Mockito.when(dictMock.getSize()).thenReturn(1000000L);
 
         // calculate actual result
-        AgglomerativePhraseConstructor phraseConstructor = new AgglomerativePhraseConstructor(dictMock);
-        List<String> actualResult = phraseConstructor.splitSentenceIntoPhrases("markov blanket feature selection for support vector machines");
+        AgglomerativePhraseConstructor phraseConstructor = new AgglomerativePhraseConstructor(dictMock, null);
+        List<String> actualResult = phraseConstructor.splitSentenceIntoPhrases("markov blanket feature selection for support vector machines.");
 
         // test validity
         System.out.println(actualResult);

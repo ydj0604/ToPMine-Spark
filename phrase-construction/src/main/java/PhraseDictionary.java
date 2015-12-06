@@ -12,10 +12,13 @@ import org.apache.commons.lang3.tuple.Pair;
 // contains phrases and words
 public class PhraseDictionary implements Serializable {
     private final Map<String, Pair<Integer, Long>> phraseToIdxAndCount;
+    private final Map<Integer, String> idxToPhrase;
 
     public PhraseDictionary(String dictFilePath) throws IOException {
 
         phraseToIdxAndCount = new HashMap<>();
+        idxToPhrase = new HashMap<>();
+
         File file = new File(dictFilePath);
 
         try(FileInputStream fstream = new FileInputStream(file);
@@ -27,16 +30,22 @@ public class PhraseDictionary implements Serializable {
             while((line = br.readLine()) != null) {
                 String phrase = line.split(",")[0].trim().toLowerCase(); // use lower case only
                 long count = Long.parseLong(line.split(",")[1].trim());
-                phraseToIdxAndCount.put(phrase, Pair.of(idx++, count));
+                phraseToIdxAndCount.put(phrase, Pair.of(idx, count));
+                idxToPhrase.put(idx, phrase);
+                idx++;
             }
         }
     }
 
     public PhraseDictionary(Map<String, MutableLong> phraseToCount) {
         phraseToIdxAndCount = new HashMap<>();
+        idxToPhrase = new HashMap<>();
+
         int idx = 0;
         for(Map.Entry<String, MutableLong> entry : phraseToCount.entrySet()) {
-            phraseToIdxAndCount.put(entry.getKey(), Pair.of(idx++, entry.getValue().longValue()));
+            phraseToIdxAndCount.put(entry.getKey(), Pair.of(idx, entry.getValue().longValue()));
+            idxToPhrase.put(idx, entry.getKey());
+            idx++;
         }
     }
 
@@ -52,6 +61,10 @@ public class PhraseDictionary implements Serializable {
             return 0L;
         }
         return phraseToIdxAndCount.get(phrase).getRight();
+    }
+
+    public String getPhrase(int idx) {
+        return idxToPhrase.get(idx);
     }
 
     public long getSize() {

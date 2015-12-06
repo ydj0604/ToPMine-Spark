@@ -10,6 +10,7 @@ public class AgglomerativePhraseConstructor implements Serializable {
     private static final double SIGNIFICANCE_SCORE_THRESHOLD = 5.0;
     private final PhraseDictionary phraseDictionary;
     private long totalNumWordsAndPhrases;
+    private final Set<String> stopWordsSet;
 
     private class AdjacentPhrasesNode { // linked list node
         private  String leftPhrase;
@@ -76,12 +77,20 @@ public class AgglomerativePhraseConstructor implements Serializable {
         }
     }
 
-    public AgglomerativePhraseConstructor(PhraseDictionary phraseDictionary) throws PhraseConstructionException, MalformedURLException {
+    public AgglomerativePhraseConstructor(PhraseDictionary phraseDictionary, Set<String> stopWordsSet)
+            throws PhraseConstructionException, MalformedURLException {
+
         if(phraseDictionary == null) {
             throw new PhraseConstructionException("AgglomerativePhraseConstructor: invalid argument(s) in AgglomerativePhraseConstructor");
         }
+
         this.phraseDictionary = phraseDictionary;
+        this.stopWordsSet = stopWordsSet;
         this.totalNumWordsAndPhrases = phraseDictionary.getSize();
+    }
+
+    public long getTotalNumWordsAndPhrases() {
+        return totalNumWordsAndPhrases;
     }
 
     public double calculateSignificanceScore(String phrase1, String phrase2) throws PhraseConstructionException {
@@ -103,7 +112,7 @@ public class AgglomerativePhraseConstructor implements Serializable {
     }
 
     public List<String> splitSentenceIntoPhrases(String sentence) throws PhraseConstructionException {
-        String[] words = Utility.tokenize(sentence);
+        String[] words = Utility.tokenize(sentence, stopWordsSet);
 
         // start a splitting process
         List<String> resultPhrases = new ArrayList<>();
@@ -185,5 +194,19 @@ public class AgglomerativePhraseConstructor implements Serializable {
         }
 
         return resultPhrases;
+    }
+
+    public String convertSentenceToSparseVecStr(String sentence) throws PhraseConstructionException {
+        List<String> phrases = splitSentenceIntoPhrases(sentence); // resultant phrases are valid
+        StringBuilder stringBuilder = new StringBuilder();
+        for(int i=0; i<phrases.size(); i++) {
+            String currPhrase = phrases.get(i);
+            stringBuilder.append(phraseDictionary.getIdxOfPhrase(currPhrase) + ":");
+            stringBuilder.append(phraseDictionary.getCountOfPhrase(currPhrase));
+            if(i<phrases.size()-1) {
+                stringBuilder.append(",");
+            }
+        }
+        return stringBuilder.toString(); // INDEX:COUNT,INDEX:COUNT, ...
     }
 }
