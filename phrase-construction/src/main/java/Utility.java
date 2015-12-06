@@ -31,7 +31,7 @@ public final class Utility {
                 continue;
             }
             word = word.trim();
-            word = word.replaceAll("\\.", ""); // remove period
+            word = word.replaceAll("[^\\w]", ""); // delete anything other than alphabets or numbers
             if((stopWordsSet==null || !stopWordsSet.contains(word)) && word.length() > 0) {
                 // TODO: get the ROOT WORD and insert ?
                 wordList.add(word);

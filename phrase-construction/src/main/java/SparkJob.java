@@ -17,7 +17,7 @@ import java.util.*;
  */
 public final class SparkJob {
     private static final int MAX_LEN_PHRASE = 10;
-    private static final int NUM_TOPICS = 10;
+    private static final int NUM_TOPICS = 5;
     private static final int NUM_WORDS_TO_SHOW_FOR_EACH_TOPIC = 30;
 
     // Helper Methods
