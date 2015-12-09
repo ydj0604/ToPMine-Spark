@@ -3,6 +3,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.BeforeClass;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,7 @@ public class PhraseMinerTest {
         expectedPhraseToCount.put("modern", new MutableLong(1));
         expectedPhraseToCount.put("sls", new MutableLong(1));
 
-        Assert.assertArrayEquals(new Integer[]{0,1,2,3,4}, actualCandidateIndices.get(sentenceIdx).toArray());
+        Assert.assertArrayEquals(new Integer[]{0, 1, 2, 3, 4}, actualCandidateIndices.get(sentenceIdx).toArray());
         Assert.assertEquals(expectedPhraseToCount, actualPhraseToCount);
     }
 }

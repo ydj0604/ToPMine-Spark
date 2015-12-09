@@ -9,9 +9,10 @@ import java.time.ZoneOffset;
  * Created by Jin on 11/18/2015.
  */
 public class Main {
-    public static final String CORPUS_FILE_PATH = "data\\dblp_titles.txt";
-    public static final String OUTPUT_FILE_PATH = "output\\dblp_output.txt";
-    public static final String DICT_FILE_PATH = "output\\dblp_dict.txt";
+    public static final String DATASET_NAME = "dblp";
+    public static final String CORPUS_FILE_PATH = String.format("data\\%s.txt", DATASET_NAME);
+    public static final String OUTPUT_FILE_PATH = String.format("output\\%s_output", DATASET_NAME);
+    public static final String DICT_FILE_PATH = String.format("output\\%s_dict", DATASET_NAME);
     public static final String STOP_WORDS_FILE_PATH = "data\\stopwords.txt";
 
 
@@ -23,7 +24,8 @@ public class Main {
         SparkConf conf = new SparkConf().setAppName("Phrase Construction");
 
         try(JavaSparkContext javaSparkContext = new JavaSparkContext(conf)) {
-            SparkJob.runPhraseMining(javaSparkContext, CORPUS_FILE_PATH, OUTPUT_FILE_PATH, DICT_FILE_PATH, STOP_WORDS_FILE_PATH);
+            SparkJob.runPhraseMining(javaSparkContext, CORPUS_FILE_PATH, OUTPUT_FILE_PATH + "_phrases", DICT_FILE_PATH + "_phrases", STOP_WORDS_FILE_PATH);
+            SparkJob.runBagOfWordsLDA(javaSparkContext, CORPUS_FILE_PATH, OUTPUT_FILE_PATH + "_words", DICT_FILE_PATH + "_words", STOP_WORDS_FILE_PATH);
         }
 
         // measure time

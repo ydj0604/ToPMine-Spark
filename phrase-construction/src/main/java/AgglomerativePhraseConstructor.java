@@ -1,3 +1,5 @@
+import org.apache.commons.lang.mutable.MutableLong;
+
 import java.io.File;
 import java.io.Serializable;
 import java.net.MalformedURLException;
@@ -197,16 +199,72 @@ public class AgglomerativePhraseConstructor implements Serializable {
     }
 
     public String convertSentenceToSparseVecStr(String sentence) throws PhraseConstructionException {
+        Map<String, MutableLong> phraseToCount = new HashMap<>();
+
+        // split sentence
         List<String> phrases = splitSentenceIntoPhrases(sentence); // resultant phrases are valid
-        StringBuilder stringBuilder = new StringBuilder();
+
+        // count phrases
         for(int i=0; i<phrases.size(); i++) {
             String currPhrase = phrases.get(i);
-            stringBuilder.append(phraseDictionary.getIdxOfPhrase(currPhrase) + ":");
-            stringBuilder.append(phraseDictionary.getCountOfPhrase(currPhrase));
-            if(i<phrases.size()-1) {
-                stringBuilder.append(",");
+            phraseToCount.computeIfAbsent(currPhrase, k->new MutableLong(0L)).increment();
+        }
+
+        // construct resultant string that represents sparse vector
+        StringBuilder stringBuilder = new StringBuilder();
+        for(Map.Entry<String, MutableLong> entry : phraseToCount.entrySet()) {
+            int currPhraseIdx = phraseDictionary.getIdxOfPhrase(entry.getKey());
+            long currCount = entry.getValue().longValue();
+            stringBuilder.append(String.format("%d:%d,", currPhraseIdx, currCount));
+        }
+
+        String result = stringBuilder.toString();
+        if(result.length() == 0) {
+            return "";
+        }
+
+        // remove the last comma
+        result = result.substring(0, result.length()-1);
+
+        return result; // INDEX:COUNT,INDEX:COUNT, ...
+    }
+
+    public String convertDocumentToSparseVecStr(String doc) throws PhraseConstructionException {
+        Map<String, MutableLong> phraseToCount = new HashMap<>();
+
+        // split sentences by period
+        String[] sentences = doc.split("\\.");
+        if(sentences.length < 1) {
+            return "";
+        }
+
+        // process each sentence
+        for(String currSentence: sentences) {
+            if(currSentence.length() == 0) {
+                continue; // ignore empty sentence
+            }
+            List<String> phraseSegments = splitSentenceIntoPhrases(currSentence);
+            for(String phrase : phraseSegments) {
+                phraseToCount.computeIfAbsent(phrase, k->new MutableLong(0L)).increment();
             }
         }
-        return stringBuilder.toString(); // INDEX:COUNT,INDEX:COUNT, ...
+
+        // compile the output
+        StringBuilder stringBuilder = new StringBuilder();
+        for(Map.Entry<String, MutableLong> entry : phraseToCount.entrySet()) {
+            int currPhraseIdx = phraseDictionary.getIdxOfPhrase(entry.getKey());
+            long currCount = entry.getValue().longValue();
+            stringBuilder.append(String.format("%d:%d,", currPhraseIdx, currCount));
+        }
+
+        String result = stringBuilder.toString();
+        if(result.length() == 0) {
+            return "";
+        }
+
+        // remove the last comma
+        result = result.substring(0, result.length()-1);
+
+        return result; // INDEX:COUNT,INDEX:COUNT, ...
     }
 }
