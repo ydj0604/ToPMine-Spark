@@ -1,14 +1,14 @@
 import org.apache.commons.lang.mutable.MutableLong;
 
+import java.io.Serializable;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Created by Jin on 12/9/2015.
  */
-public class BagOfWordsConstructor {
+public class BagOfWordsConstructor implements Serializable {
     private final PhraseDictionary phraseDictionary;
     private final Set<String> stopWordsSet;
 

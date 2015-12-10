@@ -60,8 +60,9 @@ public final class SparkJob {
         return Vectors.sparse((int)totalNumWordsAndPhrases, indices, values);
     }
 
+    // SparkJob.runBagOfWordsLDA(javaSparkContext, CORPUS_FILE_PATH, OUTPUT_FILE_PATH + "_words", DICT_FILE_PATH + "_words", STOP_WORDS_FILE_PATH);
     public static void runBagOfWordsLDA(JavaSparkContext javaSparkContext, String corpusFilePath, String outputFilePath,
-                                        String stopWordsFilePath, String dictFilePath) throws PhraseConstructionException, IOException {
+                                        String dictFilePath, String stopWordsFilePath) throws PhraseConstructionException, IOException {
 
         JavaRDD<String> corpus = javaSparkContext.textFile(corpusFilePath); // TODO: assumption: each line is a document; need to split into sentences
         Set<String> stopWordsSet = Utility.buildStopWordsSet(stopWordsFilePath);
@@ -69,6 +70,7 @@ public final class SparkJob {
         Utility.writeToFile(phraseDictionary, dictFilePath);
         BagOfWordsConstructor bagOfWordsConstructor = new BagOfWordsConstructor(phraseDictionary, stopWordsSet);
         JavaRDD<String> bagOfWordsSparseVecStrs = corpus.map(line -> bagOfWordsConstructor.convertDocumentToSparseVecStr(line));
+        bagOfWordsSparseVecStrs = bagOfWordsSparseVecStrs.filter(line -> line.length()>0); // filter out empty sparse vec str
         JavaRDD<Vector> bagOfWordsSparseVecObjs = bagOfWordsSparseVecStrs.map(line -> convertToSparseVecObj(line, phraseDictionary.getSize()));
         ldaModeling(bagOfWordsSparseVecObjs, outputFilePath, phraseDictionary);
     }
@@ -187,11 +189,8 @@ public final class SparkJob {
                 bufferedWriter.write(System.getProperty("line.separator"));
             }
 
-            // convert to local model to calculate perplexity
-            LocalLDAModel localLDAModel = ldaModel.toLocal();
-
             // write other info
-            bufferedWriter.write(String.format("K: %d, Perplexity: %.3f, Alpha: %.3f, Beta: %.3f", NUM_TOPICS, localLDAModel.logPerplexity(vectorizedCorpusWithIdx), LDA_ALPHA, LDA_BETA));
+            bufferedWriter.write(String.format("K: %d, Log-Likelihood: %.3f, Alpha: %.3f, Beta: %.3f", NUM_TOPICS, ldaModel.logLikelihood(), LDA_ALPHA, LDA_BETA));
         }
     }
 }
