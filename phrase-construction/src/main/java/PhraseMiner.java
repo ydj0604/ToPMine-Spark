@@ -1,4 +1,3 @@
-import org.apache.commons.lang.mutable.MutableInt;
 import org.apache.commons.lang.mutable.MutableLong;
 
 import java.io.Serializable;

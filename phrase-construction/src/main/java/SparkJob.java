@@ -1,10 +1,8 @@
-import org.apache.commons.collections.Bag;
 import org.apache.commons.lang.mutable.MutableLong;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.mllib.clustering.LocalLDAModel;
 import org.apache.spark.mllib.feature.IDFModel;
 import org.apache.spark.mllib.clustering.DistributedLDAModel;
 import org.apache.spark.mllib.clustering.LDA;
