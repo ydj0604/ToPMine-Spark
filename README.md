@@ -12,4 +12,4 @@ Includes 3 main components:
 -LDA
 
 
-![alt text](https://github.com/ydj0604/ToPMine-Spark/blob/master/Screen.Shot.2016-02-25.at.3.18.10.PM.png)
+![alt text](https://raw.githubusercontent.com/ydj0604/ToPMine-Spark/master/Screen.Shot.2016-03-09.at.3.16.03.PM.png)
